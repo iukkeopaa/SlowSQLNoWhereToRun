@@ -1,18 +1,23 @@
 package org.wqz.analysis.config;
 
+import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.jms.*;
+import java.io.IOException;
 import java.util.Properties;
-
+//import com.rabbitmq.client.Channel;
+//import com.rabbitmq.client.Connection;
+//import com.rabbitmq.client.ConnectionFactory;
 /**
  * @Author huhaitao21
  * @Description jmq相关配置
  * @Date 18:20 2023/2/9
  **/
 public class JmqConfig {
-    private static Logger  logger = LoggerFactory.getLogger(JmqConfig.class);
+    private static Logger logger = LoggerFactory.getLogger(JmqConfig.class);
     /**
      * 应用
      */
@@ -63,6 +68,10 @@ public class JmqConfig {
      */
     private static String MQ_TOPIC = "mqTopic";
 
+    private static ConnectionFactory connectionFactory;
+    private static Connection connection;
+    private static Session session;
+    private static MessageProducer producer;
 
     /**
      * 初始化配置
@@ -98,14 +107,48 @@ public class JmqConfig {
      */
     public static boolean initMqProducer(){
         try{
-            //todo 初始化生产者
+            // 创建连接工厂
+            connectionFactory = new ActiveMQConnectionFactory(user, password, address);
+            // 创建连接
+            connection = connectionFactory.createConnection();
+            // 启动连接
+            connection.start();
+            // 创建会话
+            session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+            // 创建目标
+            Destination destination = session.createTopic(topic);
+            // 创建生产者
+            producer = session.createProducer(destination);
             return true;
+            // // 初始化 RabbitMQ 生产者
+            //            return initRabbitMQProducer();
         }catch (Exception e){
-            logger.error("sql analysis mq config init error");
+            logger.error("sql analysis mq config init error", e);
             return false;
         }
     }
 
+
+//    private static boolean initRabbitMQProducer() {
+//        try {
+//            rabbitmqConnectionFactory = new ConnectionFactory();
+//            rabbitmqConnectionFactory.setHost(rabbitmqHost);
+//            rabbitmqConnectionFactory.setPort(rabbitmqPort);
+//            rabbitmqConnectionFactory.setUsername(rabbitmqUser);
+//            rabbitmqConnectionFactory.setPassword(rabbitmqPassword);
+//
+//            rabbitmqConnection = rabbitmqConnectionFactory.newConnection();
+//            rabbitmqChannel = rabbitmqConnection.createChannel();
+//
+//            // 声明交换器
+//            rabbitmqChannel.exchangeDeclare(rabbitmqExchange, "topic");
+//
+//            return true;
+//        } catch (IOException | TimeoutException e) {
+//            logger.error("RabbitMQ producer init error", e);
+//            return false;
+//        }
+//    }
     public static String getApp() {
         return app;
     }

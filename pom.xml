@@ -11,6 +11,7 @@
   <url>http://maven.apache.org</url>
   <modules>
     <module>sql-slow-core</module>
+      <module>sql-collections</module>
   </modules>
 
   <properties>

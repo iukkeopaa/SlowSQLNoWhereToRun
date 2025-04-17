@@ -1,82 +1,67 @@
 package org.wqz.analysis.config;
 
 
-import lombok.Data;
-import lombok.Getter;
-
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wqz.analysis.analysis.SqlAnalysisSqlTypeEnum;
 import org.wqz.analysis.rule.SqlScoreRule;
+import org.wqz.analysis.utils.DuccMonitorUtil;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
 /**
- * SQL 分析配置
- *
- * @author cong
- * @date 2024/04/12
- */
-@Data
+ * @Author huhaitao21
+ * @Description sql 分析组件配置类
+ * @Date 19:36 2022/11/3
+ **/
 public class SqlAnalysisConfig {
 
-    private SqlAnalysisConfig() {
-        throw new IllegalStateException("Utility class");
-    }
 
-
-    private static final Logger logger = LoggerFactory.getLogger(SqlAnalysisConfig.class);
+    private static Logger logger = LoggerFactory.getLogger(SqlAnalysisConfig.class);
 
     /**
      * 分析开关，默认关闭
      */
-    @Getter
-    private static boolean analysisSwitch = false;
+    private static Boolean analysisSwitch = false;
 
     /**
      * 一个id 只检查一次，默认开启
      */
-    @Getter
-    private static boolean onlyCheckOnce = true;
+    private static Boolean onlyCheckOnce = true;
 
     /**
      * 两次检查间隔 默认 5分钟
      */
-    @Getter
     private static Long checkInterval = 5 * 60 * 1000L;
 
     /**
      * 例外sql id，集合
      */
-    @Getter
     private static List<String> exceptSqlIds = new ArrayList<>();
 
     /**
      * 进行分析的sql类型
      */
-    @Getter
     private static List<String> sqlType = new ArrayList<>();
 
 
     /**
-     * 评分规则加载类， 默认 com.cong.sql.slow mirror.rule.SqlScoreRuleLoaderDefault
+     * 评分规则加载类， 默认 com.jd.sql.analysis.rule.SqlScoreRuleLoaderDefault
      */
     private static String scoreRuleLoadClass;
 
     /**
-     * 分析结果输出类，默认日志模式 com.cong.sql.slow mirror.out.SqlScoreResultOutServiceDefault
+     * 分析结果输出类，默认日志模式 com.jd.sql.analysis.out.SqlScoreResultOutServiceDefault
      */
-    @Getter
     private static String outputModel;
 
     /**
-     * 分析结果输出类，默认日志模式 com.cong.sql.slow mirror.out.SqlScoreResultOutServiceDefault
+     * 分析结果输出类，默认日志模式 com.jd.sql.analysis.out.SqlScoreResultOutServiceDefault
      */
-    @Getter
     private static String outputClass;
 
 
@@ -86,9 +71,8 @@ public class SqlAnalysisConfig {
     private static String appName;
 
     /**
-     * sqlReplaceModelSwitch 是否开启替换 SQL
+     * sqlReplaceModelSwitch
      */
-    @Getter
     private static Boolean sqlReplaceModelSwitch;
 
 
@@ -110,7 +94,6 @@ public class SqlAnalysisConfig {
     /**
      * 例外sql id 配置key,多个需要逗号分隔
      */
-    @Getter
     private static final String EXCEPT_SQL_IDS_KEY = "exceptSqlIds";
 
     /**
@@ -144,11 +127,10 @@ public class SqlAnalysisConfig {
     private static List<SqlScoreRule> ruleList = new ArrayList<>();
 
 
+
     /**
-     * 初始化
      * 初始化配置
-     *
-     * @param properties 性能
+     * @param properties
      */
     public static void init(Properties properties){
         try{
@@ -163,10 +145,10 @@ public class SqlAnalysisConfig {
             }
 
             if(StringUtils.isNotBlank(properties.getProperty(ANALYSIS_SWITCH_KEY))){
-                analysisSwitch = Boolean.parseBoolean(properties.getProperty(ANALYSIS_SWITCH_KEY));
+                analysisSwitch = Boolean.valueOf(properties.getProperty(ANALYSIS_SWITCH_KEY));
             }
             if(StringUtils.isNotBlank(properties.getProperty(ONLY_CHECK_ONCE))){
-                onlyCheckOnce = Boolean.parseBoolean(properties.getProperty(ONLY_CHECK_ONCE));
+                onlyCheckOnce = Boolean.valueOf(properties.getProperty(ONLY_CHECK_ONCE));
             }
             if(StringUtils.isNotBlank(properties.getProperty(CHECK_INTERVAL))){
                 checkInterval = Long.valueOf(properties.getProperty(CHECK_INTERVAL));
@@ -196,7 +178,15 @@ public class SqlAnalysisConfig {
                 sqlReplaceModelSwitch = Boolean.valueOf(properties.getProperty("sqlReplaceModelSwitch"));
             }
 
+            //初始化mq配置
+            JmqConfig.initConfig(properties);
 
+            //初始化ducc配置
+            if(sqlReplaceModelSwitch!=null && sqlReplaceModelSwitch && StringUtils.isNotBlank(properties.getProperty("duccAppName"))
+                    && StringUtils.isNotBlank(properties.getProperty("duccUri"))
+                    && StringUtils.isNotBlank(properties.getProperty("duccMonitorKey"))){
+                DuccMonitorUtil.start(properties.getProperty("duccAppName"),properties.getProperty("duccUri"),properties.getProperty("duccMonitorKey"));
+            }
 
         }catch (Exception e){
             logger.error("sql analysis config init error",e);
@@ -204,4 +194,83 @@ public class SqlAnalysisConfig {
 
     }
 
+    public static Boolean getAnalysisSwitch() {
+        return analysisSwitch;
+    }
+
+    public static void setAnalysisSwitch(Boolean analysisSwitch) {
+        SqlAnalysisConfig.analysisSwitch = analysisSwitch;
+    }
+
+    public static Boolean getOnlyCheckOnce() {
+        return onlyCheckOnce;
+    }
+
+    public static void setOnlyCheckOnce(Boolean onlyCheckOnce) {
+        SqlAnalysisConfig.onlyCheckOnce = onlyCheckOnce;
+    }
+
+    public static Long getCheckInterval() {
+        return checkInterval;
+    }
+
+    public static void setCheckInterval(Long checkInterval) {
+        SqlAnalysisConfig.checkInterval = checkInterval;
+    }
+
+    public static List<String> getExceptSqlIds() {
+        return exceptSqlIds;
+    }
+
+    public static void setExceptSqlIds(List<String> exceptSqlIds) {
+        SqlAnalysisConfig.exceptSqlIds = exceptSqlIds;
+    }
+
+    public static List<String> getSqlType() {
+        return sqlType;
+    }
+
+    public static void setSqlType(List<String> sqlType) {
+        SqlAnalysisConfig.sqlType = sqlType;
+    }
+
+    public static String getScoreRuleLoadClass() {
+        return scoreRuleLoadClass;
+    }
+
+    public static String getOutputClass() {
+        return outputClass;
+    }
+
+    public static List<SqlScoreRule> getRuleList() {
+        return ruleList;
+    }
+
+    public static void setRuleList(List<SqlScoreRule> ruleList) {
+        SqlAnalysisConfig.ruleList = ruleList;
+    }
+
+    public static String getOutputModel() {
+        return outputModel;
+    }
+
+    public static void setOutputModel(String outputModel) {
+        SqlAnalysisConfig.outputModel = outputModel;
+    }
+
+    public static String getAppName() {
+        return appName;
+    }
+
+    public static void setAppName(String appName) {
+        SqlAnalysisConfig.appName = appName;
+    }
+
+    public static Boolean getSqlReplaceModelSwitch() {
+        return sqlReplaceModelSwitch;
+    }
+
+    public static void setSqlReplaceModelSwitch(Boolean sqlReplaceModelSwitch) {
+        SqlAnalysisConfig.sqlReplaceModelSwitch = sqlReplaceModelSwitch;
+    }
 }
